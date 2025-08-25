@@ -10,6 +10,15 @@ AISigner, stajyer/öğrencilerin kısa bir anketle güçlü yönlerini ve seviye
 - AI destekli roadmap üretimi ve adımların onaylanması
 - GitHub fork/PR akışına dayalı çalışma düzeni
 
+## DB'yi çalıştırma
+
+PostgreSQL veritabanını Docker üzerinden ayağa kaldırmak için:
+```
+docker compose up -d
+```
+
+
+
 ## Roller (özet)
 - **Admin**: Kayıtlı kullanıcıları görür, mentör atar, proje şablonlarını yönetir.
 - **Mentör**: Kendisine atanan öğrenciyi görür, proje atar, roadmap’i onaylar/düzenler.
