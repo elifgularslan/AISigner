@@ -10,6 +10,34 @@ AISigner, stajyer/öğrencilerin kısa bir anketle güçlü yönlerini ve seviye
 - AI destekli roadmap üretimi ve adımların onaylanması
 - GitHub fork/PR akışına dayalı çalışma düzeni
 
+## Ön Gereksinimler
+
+Projeyi kurmadan önce sisteminizde aşağıdaki yazılımların kurulu olduğundan emin olun:
+
+- **Node.js** (v18 veya üzeri)  
+- **npm** (Node.js ile birlikte gelir)  
+- **Docker** & **Docker Compose**  
+- **Git**
+
+##  Ana Bağımlılıkların Yüklenmesi
+
+### Tüm package.json bağımlılıklarını yükleyin
+```bash
+npm install
+```
+Not: Bu adımı atlarsanız, proje çalışmaz çünkü gerekli kütüphaneler (Next.js, Prisma Client, Argon2 vb.) yüklü olmaz. Komutları çalıştırırken hata alırsınız.
+
+### .env dosyasını düzenle (DATABASE_URL'i ayarla)
+
+``` 
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/aisigner?schema=public" 
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+AUTH_SECRET=change_me
+
+```
+
+
 ## Database Kurulumu
  
  ### 1. Docker ile PostgreSQL'i Ayağa Kaldır
@@ -27,28 +55,13 @@ Veri tabanı çalışıyor mu test etmek için:
 NAME          COMMAND                  SERVICE    STATUS      PORTS
 aisigner_db   "docker-entrypoint.s…"   postgres   Up 5 seconds   0.0.0.0:5432->5432/tcp
 ```
-### 2. Prisma Kurulumu
- Bağımlılıkları yükle
-```
-npm install prisma --save-dev
+### 2. Prismayı başlat
 
-npm install @prisma/client
-```
-
-Prisma'yı başlat
 ```
 npx prisma init
 ```
 
-### .env dosyasını düzenle (DATABASE_URL'i ayarla)
 
-``` 
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/aisigner?schema=public" 
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-AUTH_SECRET=change_me
-
-```
 
  ### Schema dosyasını düzenle (models ekle)
  **Mevcut Modeller**
@@ -136,11 +149,41 @@ NOT: gerçek projede şifre hashlenmeli
 docker ps
 ```
 2) .env dosyasındaki DATABASE_URL'i kontrol et
-
+ 
 3) Önceki migration'ları resetle:
 ```
  npx prisma migrate reset
+
 ```
+
+## Seed Nasıl Çalıştırılır?
+🔹 Seed (Örnek Kullanıcıları Ekleme)
+
+- Bu adımlar, Lokal geliştirme sırasında veritabanına hızlıca test edilebilecek 3 örnek kullanıcı eklemek için kullanılır.Seed script’i idempotent çalışır, yani aynı script tekrar tekrar çalıştırıldığında kullanıcılar çoğalmaz.
+
+- Şifreler güvenli şekilde **argon2** ile hashlenir.
+- Prisma Client kullanılarak veritabanına bağlantı sağlanır.
+
+
+**Seed Script Çalıştırma**
+
+Seed’i çalıştırmak için terminalden proje klasöründe şu komutu çalıştır:
+```
+npm run seed
+```
+
+Script çalıştığında terminalde şöyle bir çıktı görürsün:
+
+```
+✅ ADMIN user created: admin@example.com
+✅ MENTOR user created: mentor@example.com
+✅ STUDENT user created: student@example.com
+Seed process completed! 3 users added!
+```
+
+
+
+
 
 ## Roller (özet)
 - **Admin**: Kayıtlı kullanıcıları görür, mentör atar, proje şablonlarını yönetir.
