@@ -20,12 +20,25 @@ enum Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())  
+  id        String    @id @default(cuid())
   email     String   @unique                        
   name      String?                                 
   password  String  //hashed password
   phone     String?                                 
   role      Role     @default(STUDENT)                 
   createdAt DateTime @default(now())                
-  updatedAt DateTime @updatedAt                     
+  updatedAt DateTime @updatedAt     
+
+   emailVerified DateTime?
+  sessions      Session[]
+
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  sessionToken String    @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

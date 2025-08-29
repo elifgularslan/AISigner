@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { hash } from "@node-rs/argon2";
+import { log } from "console";
 
 const prisma = new PrismaClient();
 
@@ -12,9 +13,15 @@ async function main() {
   ];
 
   for (const user of users) {
+
+
+
     // Şifreyi hashle (argon2 ile)
-    const password = await hash("geçici_şifre");// geçici şifre
-    
+  const password = 'geçici_şifre';
+  const hashedPassword = await hash(password);
+
+
+
     // Idempotent işlem: upsert kullanıyoruz
     await prisma.user.upsert({
       where: { email: user.email }, // Benzersiz email kontrolü
@@ -23,9 +30,11 @@ async function main() {
         email: user.email,
         name: user.name,
         role: user.role as any, // schema.prisma'daki Role enum'una göre
-        password,
+        password: hashedPassword, // string hash
       },
     });
+
+
     
     console.log(`✅ ${user.role} user created: ${user.email}`);
   }
