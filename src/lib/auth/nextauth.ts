@@ -1,12 +1,14 @@
-import NextAuth from "next-auth"
+/*import NextAuth from "next-auth"  */
+import NextAuth, { type AuthOptions, type SessionStrategy } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { prisma } from "@/lib/auth/prisma"
 //import { compare } from "@node-rs/argon2"
 import { verify } from "@node-rs/argon2"; // ✅ doğru fonksiyon
+import type { NextAuthOptions } from "next-auth"; // 👈 Tip tanımı eklendi
 
 
 export const authOptions = {
-  session: { strategy: "database" },
+  session: { strategy: "database"as SessionStrategy },
   secret: process.env.AUTH_SECRET,
   providers: [
     Credentials({
@@ -34,4 +36,15 @@ export const authOptions = {
       },
     }),
   ],
+   cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax"as const, // 👈 MVP kriteri karşılandı
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 }
