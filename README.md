@@ -181,6 +181,12 @@ Script çalıştığında terminalde şöyle bir çıktı görürsün:
 Seed process completed! 3 users added!
 ```
 
+## Kimlik Doğrulama (NextAuth)
+
+Bu projede kimlik doğrulama altyapısı NextAuth ile kurulmuştur. Prisma adapter kullanılarak session verileri veritabanında saklanır. Cookie ayarları `SameSite=Lax` olarak tanımlanmıştır.
+
+Dosya: `src/lib/auth/nextauth.ts`
+
 
 
 
