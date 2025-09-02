@@ -1,45 +1,72 @@
-/*"use client"
-import { signupAction } from "./actions"
 
-export default function SignupPage() {
-  return (
-    <form action={signupAction} className="flex flex-col gap-2 w-64">
-      <input name="name" placeholder="İsim" required />
-      <input name="email" type="email" placeholder="Email" required />
-      <input name="password" type="password" placeholder="Şifre" required />
-      <button type="submit">Kayıt Ol</button>
-    </form>
-  )
-}*/
 "use client"
 
-import { useState } from "react"
+import { useActionState } from "react"
 import { signupAction } from "./actions"
 
+const initialState = { error: {} as Record<string, string[]> }
+
 export default function SignupPage() {
-  const [error, setError] = useState<string | null>(null)
+ 
+const [state, formAction] = useActionState(signupAction, initialState)
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-
-    const formData = new FormData(e.currentTarget)
-
-    try {
-      await signupAction(formData)
-      // redirect /signin yapılacak server action içinde
-    } catch (err: any) {
-      setError(err.message || "Bilinmeyen bir hata oluştu")
-    }
-  }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-64">
-      {error && <p className="text-red-600">{error}</p>}
-      <input name="name" placeholder="İsim" required />
-      <input name="email" type="email" placeholder="Email" required />
-      <input name="password" type="password" placeholder="Şifre" required />
-      <button type="submit">Kayıt Ol</button>
-    </form>
+    <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
+      <h1 className="text-2xl font-bold mb-4">Kayıt Ol</h1>
+
+      <form action={formAction} className="flex flex-col gap-4">
+        {/* İsim */}
+        <div>
+          <label className="block">İsim</label>
+          <input
+            type="text"
+            name="name"
+            className="border p-2 w-full rounded"
+          />
+          {state.error?.name && (
+            <p className="text-red-500 text-sm">{state.error.name[0]}</p>
+          )}
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className="block">Email</label>
+          <input
+            type="email"
+            name="email"
+            className="border p-2 w-full rounded"
+          />
+          {state.error?.email && (
+            <p className="text-red-500 text-sm">{state.error.email[0]}</p>
+          )}
+        </div>
+
+        {/* Şifre */}
+        <div>
+          <label className="block">Şifre</label>
+          <input
+            type="password"
+            name="password"
+            className="border p-2 w-full rounded"
+          />
+          {state.error?.password && (
+            <p className="text-red-500 text-sm">{state.error.password[0]}</p>
+          )}
+        </div>
+
+        {/* Genel hata */}
+        {typeof state.error === "string" && (
+          <p className="text-red-500 text-sm">{state.error}</p>
+        )}
+
+        <button
+          type="submit"
+          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
+          Kayıt Ol
+        </button>
+      </form>
+    </div>
   )
 }

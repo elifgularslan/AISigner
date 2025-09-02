@@ -6,30 +6,6 @@ import { verify } from "@node-rs/argon2"
 import { signinSchema } from "@/features/auth/models/user"
 import { signIn } from "next-auth/react"
 
-export async function signinAction(formData: FormData) {
-  const parsed = signinSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  })
-  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
-
-  const { email, password } = parsed.data
-  const user = await prisma.user.findUnique({ where: { email } })
-  if (!user) return { error: { email: ["Kullanici bulunamadi"] } }
-
-  const isValid = await verify(user.password, password)
-  if (!isValid) return { error: { password: ["Şifre yanliş"] } }
-
-  await signIn("credentials", { email, password, redirect: true, callbackUrl: "/" })
-}
-*/
-"use server"
-
-import { prisma } from "@/lib/auth/prisma"
-import { verify } from "@node-rs/argon2"
-import { signinSchema } from "@/features/auth/models/user"
-import { signIn } from "next-auth/react"
-
 export async function signinAction(formData: FormData): Promise<void> {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
@@ -51,4 +27,26 @@ export async function signinAction(formData: FormData): Promise<void> {
   })
 
   if (!result?.ok) throw new Error("Giriş yapılamadı")
+} 
+  */
+ "use server"
+import { prisma } from "@/lib/auth/prisma"
+import { verify } from "@node-rs/argon2"
+import { signinSchema } from "@/features/auth/models/user"
+
+export async function validateUser(formData: FormData) {
+  const email = formData.get("email") as string
+  const password = formData.get("password") as string
+
+  const parsed = signinSchema.safeParse({ email, password })
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const user = await prisma.user.findUnique({ where: { email } })
+  if (!user) return { error: { email: ["Kullanıcı bulunamadı"] } }
+
+  const isValid = await verify(user.password, password)
+  if (!isValid) return { error: { password: ["Şifre yanlış"] } }
+
+  return { ok: true }
 }
+
