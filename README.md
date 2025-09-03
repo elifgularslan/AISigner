@@ -187,7 +187,35 @@ Bu projede kimlik doğrulama altyapısı NextAuth ile kurulmuştur. Prisma adapt
 
 Dosya: `src/lib/auth/nextauth.ts`
 
+## Healthcheck
+ Veritabanı bağlantısını test etmek için:
+ 
+*Tarayıcıda*: `http://localhost:3000/api/health`
 
+ veya
+ 
+*Terminalde*:
+```
+curl http://localhost:3000/api/health
+```
+
+**Beklenen çıktı**:
+```bash
+{
+  "status": "ok",
+  "db": "connected",
+  "timestamp": "2025-09-03T21:44:00.000Z"
+}
+```
+ Eğer veritabanı bağlantısı koparsa, status: "error" ve db: "disconnected" döner.
+
+
+***GET /api/health***
+
+Bu endpoint `SELECT 1` sorgusu ile bağlantıyı kontrol eder.
+
+- `200 OK` → Bağlantı sağlıklı  
+- `500 ERROR` → Bağlantı başarısız
 
 
 
