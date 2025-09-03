@@ -9,9 +9,8 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"; // Prisma ile NextAut
 // NextAuth konfigürasyonu
 export const authOptions : AuthOptions = {
      adapter: PrismaAdapter(prisma),  // Kullanıcı, session, account, verificationToken tablolarını Prisma üzerinden yönetmek için adapter
-  session: { strategy: "database"},
-// Session stratejisi: "database" seçildi
-  // Bu sayede session’lar db’de tutulur, server yeniden başlasa bile session silinmez
+  session: { strategy: "jwt"},
+
   
   secret: process.env.AUTH_SECRET, // Session ve JWT tokenleri imzalamak için kullanılacak secret
   providers: [
@@ -50,4 +49,40 @@ export const authOptions : AuthOptions = {
       },
     },
   },
+  
+ 
+callbacks: {
+  // JWT oluşturulurken çalışır
+   // Amaç: Kullanıcı giriş yaptığında, onun bilgilerini token içine eklemek
+   
+    async jwt({ token, user }) {
+      if (user) {
+        // Kullanıcı giriş yaptıysa, token içine email ve rolünü ekliyoruz
+        token.email = user.email
+        token.role = user.role
+        
+        // Prisma ile kullanıcıya ait en son session token'ını alıp token içine ekliyoruz
+        token.sessionToken = (await prisma.session.findFirst({
+          where: { userId: user.id },
+          orderBy: { expires: "desc" }
+        }))?.sessionToken
+      }
+      return token
+    },
+   
+     // Client tarafında session alınırken çalışır
+    async session({ session, token }) {
+
+       // JWT'den gelen bilgileri session.user içine kopyalıyoruz
+      session.user = {
+        ...session.user,
+        email: token.email?? "",
+        role: typeof token.role === "string" ? token.role : undefined,
+        
+      }
+      return session
+    },
+  },
+
+
 }
