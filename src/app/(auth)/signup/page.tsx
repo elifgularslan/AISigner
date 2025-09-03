@@ -1,4 +1,6 @@
 
+//AMAç:Bu sayfa, kullanıcıdan alınan kayıt bilgilerini signupAction ile işleyip doğrulama hatalarını göstererek güvenli bir şekilde yeni kullanıcı oluşturmayı amaçlar.
+
 "use client"
 
 import { useActionState } from "react"

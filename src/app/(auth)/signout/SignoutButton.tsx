@@ -1,3 +1,5 @@
+
+//  Amaç: Kullanıcı çıkış yaptığında oturumu sonlandırmak ve giriş sayfasına yönlendirmek.
 "use client"
 import { signOut } from "next-auth/react"
 
