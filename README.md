@@ -19,6 +19,47 @@ Projeyi kurmadan önce sisteminizde aşağıdaki yazılımların kurulu olduğun
 - **Docker** & **Docker Compose**  
 - **Git**
 
+##  Hızlı Kurulum:
+
+> 1. `git clone https://github.com/elifgularslan/AISigner.git`  
+>    → Projeyi kendi bilgisayarına indir.
+
+> 2. `cd AISigner`  
+>    → Proje klasörüne geç.
+
+> 3. `docker compose up -d`  
+>    → PostgreSQL veritabanını arka planda başlat.
+
+> 4. `.env.local` dosyasını oluştur  
+>    → Ortam değişkenlerini .env.example a göre tanımla (örnek: `DATABASE_URL`, `NEXTAUTH_SECRET`).
+
+> 5. `npx prisma migrate dev --name init`  
+>    → Veritabanı tablolarını oluştur ve Prisma Client’i generate et.
+
+> 6. `npm run seed`  
+>    → Test kullanıcılarını veritabanına ekle (admin, mentor, öğrenci).
+
+> 7. `npm run dev`  
+>    → Uygulamayı başlat (`http://localhost:3000` adresinde çalışır).
+
+
+
+---
+
+> **NOT:** Seed sonrası test kullanıcıları
+ 
+> | Rol     | Email               | Şifre           |
+> |---------|---------------------|-----------------|
+>| Admin   | admin@example.com   | geçici_şifre    |
+>| Mentor  | mentor@example.com  | geçici_şifre    |
+>| Student | student@example.com | geçici_şifre    |
+
+> Bu kullanıcılarla `/signin` üzerinden giriş yapabilir, yönlendirme ve layout guard’ları test edebilirsin.
+
+---
+
+
+
 ##  Ana Bağımlılıkların Yüklenmesi
 
 ### Tüm package.json bağımlılıklarını yükleyin
@@ -193,7 +234,7 @@ Dosya: `src/lib/auth/nextauth.ts`
 *Tarayıcıda*: `http://localhost:3000/api/health`
 
  veya
- 
+
 *Terminalde*:
 ```
 curl http://localhost:3000/api/health
@@ -299,6 +340,39 @@ src/
 
 **M0 – Bootstrap (tamamlandı)**
 - Next.js 15 + TS + Tailwind iskeleti, README ve lisans.
+
+##  M1 – Altyapı
+
+ ***Veritabanı altyapısı***: PostgreSQL (Docker Compose) + Prisma kurulumu  
+  - `User` ve `Role` modeli tanımlandı  
+  - Prisma singleton (`src/lib/db.ts`) ile bağlantı yönetimi sağlandı
+
+***Seed sistemi***:  
+  - `npx prisma db seed` ile 1 admin, 1 mentor, 1 öğrenci oluşturuluyor  
+  - Şifreler hashlenmiş (`argon2`) ve veritabanına kaydediliyor  
+  - Test kullanıcıları: `admin@example.com`, `mentor@example.com`, `student@example.com`
+
+ ***Kimlik doğrulama (Auth)***:  
+  - NextAuth kullanıldı (Lucia önerisi değerlendirildi)  
+  - `src/app/api/auth/[...nextauth]/route.ts` içinde yapılandırıldı  
+  - Oturum yönetimi: `getServerSession(authOptions)`  
+  - Giriş/kayıt akışı tamamlandı
+
+ ***RBAC (Role-Based Access Control)***:  
+  - Rol bazlı layout guard’ları: `src/app/(admin|mentor|student)/layout.tsx`  
+  - `session.user.role` kontrolü ile yönlendirme sağlanıyor  
+  - Giriş yapılmamış kullanıcılar `/signin` sayfasına yönlendiriliyor
+
+   ***Healthcheck endpoint***:  
+  - `GET /api/health` → veritabanı bağlantısını kontrol eder  
+  - JSON çıktısı: `{ status, db, timestamp }`  
+  - README’ye açıklayıcı not eklendi
+
+  ***Hızlı Başlangıç rehberi***:  
+  - `git clone → docker compose up -d → .env → migrate → seed → dev` adımları  
+  - README’de eksiksiz ve birebir uygulanabilir şekilde belgelendi
+
+
 
 **M1 – Altyapı**
 - Postgres (Docker Compose), Prisma kurulumu; `User` + `Role` modeli; seed ile 1 admin/1 mentor/1 öğrenci.
