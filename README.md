@@ -19,7 +19,9 @@ Projeyi kurmadan önce sisteminizde aşağıdaki yazılımların kurulu olduğun
 - **Docker** & **Docker Compose**  
 - **Git**
 
-##  Hızlı Kurulum:
+
+
+##  Hızlı Kurulum
 
 > 1. `git clone https://github.com/elifgularslan/AISigner.git`  
 >    → Projeyi kendi bilgisayarına indir.
@@ -30,16 +32,19 @@ Projeyi kurmadan önce sisteminizde aşağıdaki yazılımların kurulu olduğun
 > 3. `docker compose up -d`  
 >    → PostgreSQL veritabanını arka planda başlat.
 
-> 4. `.env.local` dosyasını oluştur  
->    → Ortam değişkenlerini .env.example a göre tanımla (örnek: `DATABASE_URL`, `NEXTAUTH_SECRET`).
+> 4. `.env` dosyasını oluştur  
+>    → Ortam değişkenlerini `.env.example` dosyasına göre tanımla (örnek: `DATABASE_URL`, `NEXTAUTH_SECRET`).
 
-> 5. `npx prisma migrate dev --name init`  
+> 5. `npm install`  
+>    → Proje bağımlılıklarını yükle (Next.js, Prisma, Argon2 vb.)
+
+> 6. `npx prisma migrate dev --name init`  
 >    → Veritabanı tablolarını oluştur ve Prisma Client’i generate et.
 
-> 6. `npm run seed`  
+> 7. `npm run seed`  
 >    → Test kullanıcılarını veritabanına ekle (admin, mentor, öğrenci).
 
-> 7. `npm run dev`  
+> 8. `npm run dev`  
 >    → Uygulamayı başlat (`http://localhost:3000` adresinde çalışır).
 
 
@@ -70,11 +75,10 @@ Not: Bu adımı atlarsanız, proje çalışmaz çünkü gerekli kütüphaneler (
 
 ### .env dosyasını düzenle (DATABASE_URL'i ayarla)
 
-``` 
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/aisigner?schema=public" 
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-AUTH_SECRET=change_me
+```bash 
+DATABASE_URL= "YOUR_DATABASE_URL"
+NEXT_PUBLIC_APP_URL= YOUR_LOCAL_HOST_URL
+AUTH_SECRET= change_me
 
 ```
 
@@ -83,11 +87,11 @@ AUTH_SECRET=change_me
  
  ### 1. Docker ile PostgreSQL'i Ayağa Kaldır
 PostgreSQL veritabanını Docker üzerinden ayağa kaldırmak için:
-```
+```bash
 docker compose up -d
 ```
 Veri tabanı çalışıyor mu test etmek için:
-```
+```bash
  docker compose ps 
 ```
 
@@ -98,7 +102,7 @@ aisigner_db   "docker-entrypoint.s…"   postgres   Up 5 seconds   0.0.0.0:5432-
 ```
 ### 2. Prismayı başlat
 
-```
+```bash
 npx prisma init
 ```
 
@@ -108,7 +112,7 @@ npx prisma init
  **Mevcut Modeller**
 
 * **User Modeli**
-```
+```prisma
  model User {
 
   id        Int      @id @default(autoincrement())  
@@ -127,6 +131,17 @@ enum Role {
   STUDENT
 }
 
+```
+* **Session Modeli**
+```prisma
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 ```
 
 ### 3. Migration Çalıştır
@@ -166,7 +181,12 @@ ls node_modules/@prisma/client/
 ``` 
 ### 5. Test Verisi Ekleme
 
-**Prisma Studio ile görsel olarak**
+**Otomatik olarak Seed'i çalıştırarak (önerilen yöntem):**
+```bash
+npm run seed
+```
+
+**Veya Prisma Studio ile görsel olarak**
 ```
 npx prisma studio
 ```
@@ -321,6 +341,7 @@ src/
     schema.prisma              # yalnızca veritabanı şeması (Prisma)
 ```
 
+
 - **Şemalar (schemas):**
   - **Veritabanı şeması** yalnızca `prisma/schema.prisma` içinde tutulur.
   - **Uygulama/doğrulama şemaları** (Zod) ilgili feature altında `models/` içinde tanımlanır.
@@ -335,13 +356,64 @@ src/
 - **PR Kuralları:** “Ne değişti?” + “Nasıl test edilir?” zorunlu; ekran görüntüsü/gif teşvik edilir.
 
 ---
+## 📁 Mevcut Proje Yapısı
 
+Uygulama Next.js App Router mimarisiyle yapılandırılmıştır. Dosya sistemi route, rol ve işlev bazlı organize edilmiştir.
+
+```
+├── prisma/
+│   ├── schema.prisma         # Veritabanı modeli tanımları (User, Session, Role)
+│   ├── migrations/           # Prisma migration dosyaları
+├── public/                   # Statik dosyalar (favicon, resimler vs.)
+├── scripts/
+│   └── seed.ts               # Test kullanıcılarını ekleyen seed script
+├── src/
+│   ├── app/
+│   │   ├── (admin)/          # Admin'e özel route grubu
+│   │   │   ├── admin-dashboard/
+│   │   │   └── layout.tsx    # Admin layout guard (RBAC kontrolü)
+│   │   ├── (mentor)/         # Mentör'e özel route grubu
+│   │   │   ├── mentor-dashboard/
+│   │   │   └── layout.tsx
+│   │   ├── (student)/        # Öğrenci'ye özel route grubu
+│   │   │   └── layout.tsx
+│   │   ├── (auth)/           # Giriş / Kayıt / Çıkış sayfaları
+│   │   │   ├── signin/
+│   │   │   │   ├── page.tsx      # Giriş formu
+│   │   │   │   └── actions.ts    # Giriş işlemi (server action)
+│   │   │   ├── signup/
+│   │   │   │   ├── page.tsx      # Kayıt formu
+│   │   │   │   └── actions.ts    # Kayıt işlemi
+│   │   │   ├── signout/
+│   │   │   │   └── SignoutButton.tsx
+│   │   ├── api/
+│   │   │   ├── auth/
+│   │   │   │   └── [...nextauth]/route.ts  # NextAuth endpoint
+│   │   │   ├── health/
+│   │   │   │   └── route.ts       # Veritabanı bağlantı kontrolü
+│   │   │── debug/
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+├── components/
+│   ├── DebugNavbar.tsx       # Oturum bilgisi gösteren debug bileşeni
+│   └── SessionProvider.tsx   # NextAuth session sağlayıcısı (client context)
+├── features/
+│   └── auth/modules/
+│       └── user.ts           # Auth işlemleri ve Zod şemaları
+├── lib/
+│   ├── auth/
+│   │   ├── nextauth.ts       # NextAuth konfigürasyonu
+│   │   ├── prisma.ts         # Prisma client instance
+│   └── db.ts                 # Alternatif veritabanı erişimi
+├── types/
+│   └── next-auth.d.ts        # NextAuth tip genişletmeleri (Session, JWT, User)
+```
 ## Genel Roadmap
 
-**M0 – Bootstrap (tamamlandı)**
+### M0 – Bootstrap (tamamlandı)
 - Next.js 15 + TS + Tailwind iskeleti, README ve lisans.
 
-##  M1 – Altyapı
+###  M1 – Altyapı (tamamlandı)
 
  ***Veritabanı altyapısı***: PostgreSQL (Docker Compose) + Prisma kurulumu  
   - `User` ve `Role` modeli tanımlandı  
@@ -374,30 +446,26 @@ src/
 
 
 
-**M1 – Altyapı**
-- Postgres (Docker Compose), Prisma kurulumu; `User` + `Role` modeli; seed ile 1 admin/1 mentor/1 öğrenci.
-- Auth çözümü seçimi (Lucia öneri) + temel giriş/kayıt; RBAC korumalı layoutlar.
-
-**M2 – Öğrenci Onboarding & Profil Özeti**
+### M2 – Öğrenci Onboarding & Profil Özeti
 - Çok adımlı anket formu (`features/student/ui`), Zod şemaları `models/` altında.
 - Anket verisinin saklanması ve **mock AI** ile özet (level/tracks/skills/summary).
 
-**M3 – Admin & Mentor Temelleri**
+### M3 – Admin & Mentor Temelleri
 - Admin: kullanıcı listesi, rol/mentör atama ekranı.
 - Proje Havuzu (Admin): şablon CRUD, markdown editörü, zorluk/track alanları.
 
-**M4 – Proje Atama & Roadmap Üretimi**
+### M4 – Proje Atama & Roadmap Üretimi
 - Mentor: öğrenci detayında öneri sıralaması ile proje seçimi.
 - AI ile roadmap taslağı üret; mentor düzenleyip yayınlar (yalnızca taslak aşaması, görevleştirmeyi sonraya bırakabiliriz).
 
-**M5 – GitHub Akışı Rehberi**
+### M5 – GitHub Akışı Rehberi
 - Dokümantasyon: fork → branch → PR akışı, `gh` CLI yönergeleri.
 - (Opsiyon) PR/Issue read‑only durumlarını uygulamada göstermek için webhook/cron okuma taslağı.
 
-**M6 – Geri Bildirim ve Görünürlük**
+### M6 – Geri Bildirim ve Görünürlük
 - Öğrenci/Mentor yorum alanları (uygulama içi), ilerleme yüzdesi, bildirim taslağı.
 
-**M7 – Stabilizasyon**
+### M7 – Stabilizasyon
 - CI (lint/typecheck/test/build), e2e test iskeleti, güvenlik/gizlilik gözden geçirme.
 
 > Not: Bu roadmap **yön göstericidir**. Her milestone küçük PR’lara bölünmelidir; detaylı “tasklandırma” issue’larda yapılacaktır.
