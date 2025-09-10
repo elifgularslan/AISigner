@@ -3,72 +3,114 @@
 
 "use client"
 
+import { useState } from "react"
 import { useActionState } from "react"
 import { signupAction } from "./actions"
 
 const initialState = { error: {} as Record<string, string[]> }
 
 export default function SignupPage() {
- 
-const [state, formAction] = useActionState(signupAction, initialState)
-
+  const [state, formAction] = useActionState(signupAction, initialState)
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Kayıt Ol</h1>
-
-      <form action={formAction} className="flex flex-col gap-4">
-        {/* İsim */}
-        <div>
-          <label className="block">İsim</label>
-          <input
-            type="text"
-            name="name"
-            className="border p-2 w-full rounded"
-          />
-          {state.error?.name && (
-            <p className="text-red-500 text-sm">{state.error.name[0]}</p>
-          )}
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-gray-200">
+        {/* Logo veya Başlık */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-green-600 flex items-center justify-center shadow-md">
+            <span className="text-white text-2xl font-bold">📝</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800">Kayıt Ol</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Hesabınızı oluşturmak için bilgilerinizi girin
+          </p>
         </div>
 
-        {/* Email */}
-        <div>
-          <label className="block">Email</label>
-          <input
-            type="email"
-            name="email"
-            className="border p-2 w-full rounded"
-          />
-          {state.error?.email && (
-            <p className="text-red-500 text-sm">{state.error.email[0]}</p>
+        <form action={formAction} className="space-y-6">
+          {/* İsim */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              İsim
+            </label>
+            <input
+              type="text"
+              name="name"
+              className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-800 shadow-sm focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 outline-none transition"
+            />
+            {state.error?.name && (
+              <p className="mt-2 text-sm text-red-500">{state.error.name[0]}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-800 shadow-sm focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 outline-none transition"
+            />
+            {state.error?.email && (
+              <p className="mt-2 text-sm text-red-500">{state.error.email[0]}</p>
+            )}
+          </div>
+
+          {/* Şifre + Göster/Gizle */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Şifre
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 pr-10 text-gray-800 shadow-sm focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 outline-none transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
+            {state.error?.password && (
+              <p className="mt-2 text-sm text-red-500">{state.error.password[0]}</p>
+            )}
+          </div>
+
+          {/* Genel hata */}
+          {typeof state.error === "string" && (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 shadow-inner">
+              {state.error}
+            </div>
           )}
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className="w-full rounded-2xl bg-green-600 px-4 py-3 font-semibold text-white shadow-md transition hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-green-200"
+          >
+            Kayıt Ol
+          </button>
+        </form>
+
+        {/* Alt link */}
+        <div className="mt-6 text-center text-sm text-gray-500">
+          <p>
+            Zaten hesabınız var mı?{" "}
+            <a
+              href="/signin"
+              className="font-medium text-green-600 hover:text-green-700"
+            >
+              Giriş Yap
+            </a>
+          </p>
         </div>
-
-        {/* Şifre */}
-        <div>
-          <label className="block">Şifre</label>
-          <input
-            type="password"
-            name="password"
-            className="border p-2 w-full rounded"
-          />
-          {state.error?.password && (
-            <p className="text-red-500 text-sm">{state.error.password[0]}</p>
-          )}
-        </div>
-
-        {/* Genel hata */}
-        {typeof state.error === "string" && (
-          <p className="text-red-500 text-sm">{state.error}</p>
-        )}
-
-        <button
-          type="submit"
-          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-        >
-          Kayıt Ol
-        </button>
-      </form>
+      </div>
     </div>
   )
 }
