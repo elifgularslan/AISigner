@@ -41,8 +41,8 @@ export default function SigninPage() {
     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
       <h1 className="text-2xl font-bold mb-4">Giriş Yap</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Email */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4"> 
+        {/* Email */} 
         <div>
           <label className="block">Email</label>
           <input
@@ -54,9 +54,9 @@ export default function SigninPage() {
           {state.error?.email && (
             <p className="text-red-500 text-sm">{state.error.email[0]}</p>
           )}
-        </div>
+        </div>  
 
-        {/* Şifre */}
+        {/* Şifre */} 
         <div>
           <label className="block">Şifre</label>
           <input
@@ -68,7 +68,7 @@ export default function SigninPage() {
           {state.error?.password && (
             <p className="text-red-500 text-sm">{state.error.password[0]}</p>
           )}
-        </div>
+        </div> 
 
         {/* Genel hata */}
         {state.error?.general && (
@@ -132,3 +132,4 @@ export default function SigninPage() {
   )
 }
 */
+
