@@ -158,11 +158,12 @@ npx prisma generate
 
 * Tablolar oluştu mu?
 ```
-docker exec -it aisigner_db psql -U postgres -d aisigner -c "\dt"
+docker exec -it aisigner_db bash -c "psql -U postgres -d aisigner -c '\dt'"
+
 ```
  * User tablosu yapısı doğru mu?
 ```
-docker exec -it aisigner_db psql -U postgres -d aisigner -c "\d users"
+docker exec -it aisigner_db bash -c "psql -U postgres -d aisigner -c '\d \"User\"'"
 ```
  **Prisma Studio ile Görsel Test**
 
@@ -184,6 +185,12 @@ ls node_modules/@prisma/client/
 **Otomatik olarak Seed'i çalıştırarak (önerilen yöntem):**
 ```bash
 npm run seed
+```
+**Ekstra Kontrol: Kullanıcı sayısı**
+Seed script’in doğru çalışıp çalışmadığını kontrol etmek için kullanın . Örneğin  sonucu → admin, mentor, student kullanıcıları başarıyla eklenmiş demektir.
+
+```bash
+docker exec -it aisigner_db bash -c "psql -U postgres -d aisigner -c 'SELECT COUNT(*) FROM \"User\"'"
 ```
 
 **Veya Prisma Studio ile görsel olarak**

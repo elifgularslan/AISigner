@@ -6,6 +6,11 @@
 import { useState } from "react"
 import { useActionState } from "react"
 import { signupAction } from "./actions"
+import { Eye, EyeOff } from "lucide-react";
+import { UserPlus } from "lucide-react"
+
+
+
 
 const initialState = { error: {} as Record<string, string[]> }
 
@@ -19,7 +24,7 @@ export default function SignupPage() {
         {/* Logo veya Başlık */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-green-600 flex items-center justify-center shadow-md">
-            <span className="text-white text-2xl font-bold">📝</span>
+             <UserPlus className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-800">Kayıt Ol</h1>
           <p className="mt-2 text-sm text-gray-500">
@@ -74,7 +79,7 @@ export default function SignupPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? <Eye className="w-5 h-5" /> :<EyeOff className="w-5 h-5" />}
               </button>
             </div>
             {state.error?.password && (
