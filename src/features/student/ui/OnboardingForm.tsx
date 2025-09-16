@@ -1,18 +1,22 @@
 "use client"
 
-import { useState} from "react"
-import {useForm } from "react-hook-form"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import { personalSchema,  experienceSchema,  goalsSchema,
+import {
+  personalSchema,
+  experienceSchema,
+  goalsSchema,
 } from "@/features/student/models/onboarding"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 
-const steps = ["Kişisel Bilgiler", "Deneyim", "Hedefler"]
+import { saveOnboarding } from "@/features/student/server/onboarding"
 
+const steps = ["Kişisel Bilgiler", "Deneyim", "Hedefler"]
 
 export default function OnboardingForm() {
   const [step, setStep] = useState(0)
@@ -32,12 +36,30 @@ export default function OnboardingForm() {
 
   const onBack = () => setStep((prev) => prev - 1)
 
-  const onFinalSubmit = (data: any) => {
+  const onFinalSubmit = async () => {
+    // tüm veriyi birleştir
     const fullData = {
-      ...getValues(), // tüm adımlardan gelen veriyi al
-      ...data,        // son adımın verisi
+      personal: {
+        firstName: getValues("firstName"),
+        lastName: getValues("lastName"),
+        birthYear: getValues("birthYear"),
+        phoneNumber: getValues("phoneNumber"),
+      },
+      experience: {
+        level: getValues("level"),
+        tools: getValues("tools"),
+      },
+      goals: {
+        goal: getValues("goal"),
+        availability: getValues("availability"),
+      },
     }
-    console.log("✅ Onboarding verisi:", fullData)
+
+    try {
+      await saveOnboarding(fullData) // server action çağrısı
+    } catch (err) {
+      console.error("Onboarding kaydı başarısız:", err)
+    }
   }
 
   return (
@@ -47,7 +69,6 @@ export default function OnboardingForm() {
     >
       <Progress value={((step + 1) / steps.length) * 100} />
 
-
       {/* Adım 1: Kişisel Bilgiler */}
       {step === 0 && (
         <>
@@ -55,7 +76,7 @@ export default function OnboardingForm() {
           <Input {...register("lastName")} placeholder="Soyadınız" />
           <Input
             {...register("birthYear", { valueAsNumber: true })}
-            placeholder="Doğum Yılı (örnek: 1998)"
+            placeholder="Doğum Yılı"
             type="number"
           />
           <Input {...register("phoneNumber")} placeholder="Telefon Numaranız" />
@@ -100,11 +121,7 @@ export default function OnboardingForm() {
           </Button>
         )}
         {step < steps.length - 1 ? (
-          <Button
-            type="button"
-            onClick={onNext}
-            disabled={!formState.isValid}
-          >
+          <Button type="button" onClick={onNext} disabled={!formState.isValid}>
             İleri
           </Button>
         ) : (
@@ -116,6 +133,3 @@ export default function OnboardingForm() {
     </form>
   )
 }
-
-
-

@@ -31,6 +31,7 @@ model User {
 
    emailVerified DateTime?
   sessions      Session[]
+    studentProfile  StudentProfile? 
 
 }
 
@@ -41,4 +42,15 @@ model Session {
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudentProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experienceLevel String
+  interests       String[]
+  goals           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
