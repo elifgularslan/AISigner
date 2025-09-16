@@ -47,7 +47,7 @@ export default function OnboardingForm() {
       },
       experience: {
         level: getValues("level"),
-        tools: getValues("tools"),
+        interest: getValues("interest"),
       },
       goals: {
         goal: getValues("goal"),
@@ -93,10 +93,23 @@ export default function OnboardingForm() {
             <option value="advanced">İleri Seviye</option>
           </select>
 
-          <Input
-            {...register("tools")}
-            placeholder="Kullandığınız araçlar (virgülle ayırın)"
-          />
+          {/* İlgi alanları - checkbox'lar */}
+    <div className="mt-4">
+      <label className="font-medium block mb-2">İlgi Alanların</label>
+      <div className="space-y-2">
+        {["AI", "Web Development", "Mobile", "Data Science", "UI/UX"].map((interest) => (
+          <label key={interest} className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              value={interest}
+              {...register("interest")}
+              className="accent-blue-500"
+            />
+            <span>{interest}</span>
+          </label>
+        ))}
+      </div>
+    </div>
         </>
       )}
 
