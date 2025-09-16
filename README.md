@@ -285,6 +285,32 @@ Bu endpoint `SELECT 1` sorgusu ile bağlantıyı kontrol eder.
 - `200 OK` → Bağlantı sağlıklı  
 - `500 ERROR` → Bağlantı başarısız
 
+## M2 – Öğrenci Onboarding & Profil Özeti
+
+Bu modül, öğrencinin kayıt sonrası onboarding sürecini ve profil özetini yönetir.
+
+###  *Dosya Yapısı*
+
+- `features/student/ui/OnboardingForm.tsx` → Çok adımlı form bileşeni
+- `features/student/models/onboarding.ts` → Zod doğrulama şemaları
+- `features/student/server/onboarding.ts` → `saveOnboarding(data)` server action
+- `features/student/server/profileSummary.ts` → Mock AI fonksiyonu (`getMockProfileSummary`)
+- `features/student/ui/ProfileSummaryCard.tsx` → Profil özeti bileşeni
+- `app/(student)/student-dashboard/page.tsx` → Öğrenci dashboard sayfası
+
+###  *Süreç Akışı*
+
+1. Öğrenci `OnboardingForm` üzerinden kişisel bilgilerini, deneyim seviyesini ve hedeflerini girer.
+2. Form submit edildiğinde `saveOnboarding()` ile veritabanına `StudentProfile` olarak kaydedilir.
+3. Ardından `getMockProfileSummary()` ile sahte AI özeti oluşturulur.
+4. Öğrenci `student-dashboard` sayfasına yönlendirilir ve profil özeti + proje durumu gösterilir.
+
+### **Mock AI Notu**
+
+`getMockProfileSummary()` fonksiyonu şu an sahte veri döndürmektedir. İleride gerçek OpenAI entegrasyonu ile kolayca değiştirilebilir.
+
+---
+
 
 
 ## Roller (özet)
@@ -405,8 +431,17 @@ Uygulama Next.js App Router mimarisiyle yapılandırılmıştır. Dosya sistemi 
 │   ├── DebugNavbar.tsx       # Oturum bilgisi gösteren debug bileşeni
 │   └── SessionProvider.tsx   # NextAuth session sağlayıcısı (client context)
 ├── features/
-│   └── auth/modules/
-│       └── user.ts           # Auth işlemleri ve Zod şemaları
+│   |└── auth/modules/
+│   |    └── user.ts           # Auth işlemleri ve Zod şemaları
+│   ├── student/ui/
+│   │   ├── OnboardingForm.tsx       # Çok adımlı öğrenci onboarding formu
+│   │   └── ProfileSummaryCard.tsx   # Profil özeti bileşeni (mock AI çıktısı)
+│   ├── student/models/
+│   │   └── onboarding.ts           # Zod doğrulama şemaları (kişisel, deneyim, hedef)
+│   ├── student/server/
+│   │   ├── onboarding.ts           # `saveOnboarding(data)` server action
+│   │   └── profileSummary.ts       # `getMockProfileSummary()` fonksiyonu
+|
 ├── lib/
 │   ├── auth/
 │   │   ├── nextauth.ts       # NextAuth konfigürasyonu
@@ -453,9 +488,33 @@ Uygulama Next.js App Router mimarisiyle yapılandırılmıştır. Dosya sistemi 
 
 
 
-### M2 – Öğrenci Onboarding & Profil Özeti
-- Çok adımlı anket formu (`features/student/ui`), Zod şemaları `models/` altında.
-- Anket verisinin saklanması ve **mock AI** ile özet (level/tracks/skills/summary).
+### M2 – Öğrenci Onboarding & Profil Özeti (tamamlandı)
+
+***Çok adımlı anket formu***:  
+- `features/student/ui/OnboardingForm.tsx` içinde ShadCN bileşenleriyle oluşturuldu  
+- Adımlar: Kişisel Bilgiler → Deneyim → Hedefler  
+- Doğrulama: `features/student/models/onboarding.ts` içinde Zod şemaları  
+- Progress bar ve stepper ile kullanıcı yönlendirmesi sağlandı
+
+***Veri kaydı (Server Action)***:  
+- `features/student/server/onboarding.ts` → `saveOnboarding(data)` fonksiyonu  
+- `prisma/schema.prisma` → `StudentProfile` modeli: `userId`, `experienceLevel`, `interests`, `goals`, `availability`, `birthYear`  
+- Idempotent kayıt: aynı kullanıcıya tekrar çalıştırıldığında veri güncellenir  
+- Başarılı işlem sonrası redirect: `/app/(student)/student-dashboard`
+
+***Profil özeti (Mock AI)***:  
+- `features/student/server/profileSummary.ts` → `getMockProfileSummary()` fonksiyonu  
+- Örnek response: `{ level, tracks, summary }`  
+- UI: `features/student/ui/ProfileSummaryCard.tsx` bileşeni ile gösterilir  
+- Not: Bu mock fonksiyon ileride gerçek OpenAI entegrasyonu ile kolayca değiştirilebilir
+
+***Dashboard entegrasyonu***:  
+- `app/(student)/student-dashboard/page.tsx` → Öğrenci verisi veritabanından çekilir  
+- Hoşgeldin mesajı, profil özeti ve proje durumu gösterilir  
+- Proje henüz atanmadıysa bilgilendirici mesaj render edilir
+
+
+
 
 ### M3 – Admin & Mentor Temelleri
 - Admin: kullanıcı listesi, rol/mentör atama ekranı.
