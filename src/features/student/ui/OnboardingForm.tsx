@@ -16,21 +16,10 @@ import { Progress } from "@/components/ui/progress"
 
 import { saveOnboarding } from "@/features/student/server/onboarding"
 
-
-
-
-
-
 const steps = ["Kişisel Bilgiler", "Deneyim", "Hedefler"]
 
 export default function OnboardingForm() {
   const [step, setStep] = useState(0)
-
-    const [profileSummary, setProfileSummary] = useState<null | {
-    level: string
-    tracks: string[]
-    summary: string
-  }>(null)
 
   const schema = [personalSchema, experienceSchema, goalsSchema][step]
   const form = useForm({
@@ -48,13 +37,12 @@ export default function OnboardingForm() {
   const onBack = () => setStep((prev) => prev - 1)
 
   const onFinalSubmit = async () => {
-    // tüm veriyi birleştir
     const fullData = {
       personal: {
         firstName: getValues("firstName"),
         lastName: getValues("lastName"),
         birthYear: getValues("birthYear"),
-       phoneNumber: getValues("phoneNumber"),
+        phoneNumber: getValues("phoneNumber"),
       },
       experience: {
         level: getValues("level"),
@@ -67,13 +55,11 @@ export default function OnboardingForm() {
     }
 
     try {
-      await saveOnboarding(fullData) // server action çağrısı
+      await saveOnboarding(fullData)
     } catch (err) {
       console.error("Onboarding kaydı başarısız:", err)
     }
   }
-     
-  
 
   return (
     <form
@@ -84,60 +70,98 @@ export default function OnboardingForm() {
 
       {/* Adım 1: Kişisel Bilgiler */}
       {step === 0 && (
-        <> 
-          
-          <Input {...register("firstName")} placeholder="Adınız" />
-          <Input {...register("lastName")} placeholder="Soyadınız" />
-          <Input
-            {...register("birthYear", { valueAsNumber: true })}
-            placeholder="Doğum Yılı"
-            type="number"
-          />
-        
-          <Input {...register("phoneNumber")} placeholder="Telefon Numaranız" />
+        <>
+          <div className="space-y-2">
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+              Adınız
+            </label>
+            <Input id="firstName" {...register("firstName")} />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+              Soyadınız
+            </label>
+            <Input id="lastName" {...register("lastName")} />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="birthYear" className="block text-sm font-medium text-gray-700">
+              Doğum Yılı
+            </label>
+            <Input
+              id="birthYear"
+              type="number"
+              {...register("birthYear", { valueAsNumber: true })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+              Telefon Numaranız
+            </label>
+            <Input id="phoneNumber" {...register("phoneNumber")} />
+          </div>
         </>
       )}
 
       {/* Adım 2: Deneyim */}
       {step === 1 && (
         <>
-          <select {...register("level")} className="border p-2 rounded w-full">
-            <option value="">Seçiniz</option>
-            <option value="beginner">Yeni Başlayan</option>
-            <option value="intermediate">Orta Seviye</option>
-            <option value="advanced">İleri Seviye</option>
-          </select>
+          <div className="space-y-2">
+            <label htmlFor="level" className="block text-sm font-medium text-gray-700">
+              Seviye
+            </label>
+            <select {...register("level")} id="level" className="border p-2 rounded w-full">
+              <option value="">Seçiniz</option>
+              <option value="beginner">Yeni Başlayan</option>
+              <option value="intermediate">Orta Seviye</option>
+              <option value="advanced">İleri Seviye</option>
+            </select>
+          </div>
 
-          {/* İlgi alanları - checkbox'lar */}
-    <div className="mt-4">
-      <label className="font-medium block mb-2">İlgi Alanların</label>
-      <div className="space-y-2">
-        {["AI", "Web Development", "Mobile", "Data Science", "UI/UX"].map((interest) => (
-          <label key={interest} className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              value={interest}
-              {...register("interest")}
-              className="accent-blue-500"
-            />
-            <span>{interest}</span>
-          </label>
-        ))}
-      </div>
-    </div>
+          <div className="mt-4 space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              İlgi Alanların
+            </label>
+            <div className="space-y-2">
+              {["AI", "Web Development", "Mobile", "Data Science", "UI/UX"].map((interest) => (
+                <label key={interest} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={interest}
+                    {...register("interest")}
+                    className="accent-blue-500"
+                  />
+                  <span>{interest}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
       {/* Adım 3: Hedefler */}
       {step === 2 && (
         <>
-          <Input {...register("goal")} placeholder="Öğrenme hedefiniz nedir?" />
-          <select {...register("availability")} className="border p-2 rounded w-full">
-            <option value="">Uygunluk seçin</option>
-            <option value="full-time">Tam zamanlı</option>
-            <option value="part-time">Yarı zamanlı</option>
-            <option value="weekends">Hafta sonları</option>
-          </select>
+          <div className="space-y-2">
+            <label htmlFor="goal" className="block text-sm font-medium text-gray-700">
+              Öğrenme hedefiniz nedir?
+            </label>
+            <Input id="goal" {...register("goal")} />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="availability" className="block text-sm font-medium text-gray-700">
+              Uygunluk
+            </label>
+            <select {...register("availability")} id="availability" className="border p-2 rounded w-full">
+              <option value="">Uygunluk seçin</option>
+              <option value="full-time">Tam zamanlı</option>
+              <option value="part-time">Yarı zamanlı</option>
+              <option value="weekends">Hafta sonları</option>
+            </select>
+          </div>
         </>
       )}
 
@@ -158,7 +182,6 @@ export default function OnboardingForm() {
           </Button>
         )}
       </div>
-     
     </form>
   )
 }
