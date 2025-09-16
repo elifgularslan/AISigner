@@ -16,10 +16,21 @@ import { Progress } from "@/components/ui/progress"
 
 import { saveOnboarding } from "@/features/student/server/onboarding"
 
+
+
+
+
+
 const steps = ["Kişisel Bilgiler", "Deneyim", "Hedefler"]
 
 export default function OnboardingForm() {
   const [step, setStep] = useState(0)
+
+    const [profileSummary, setProfileSummary] = useState<null | {
+    level: string
+    tracks: string[]
+    summary: string
+  }>(null)
 
   const schema = [personalSchema, experienceSchema, goalsSchema][step]
   const form = useForm({
@@ -43,7 +54,7 @@ export default function OnboardingForm() {
         firstName: getValues("firstName"),
         lastName: getValues("lastName"),
         birthYear: getValues("birthYear"),
-        phoneNumber: getValues("phoneNumber"),
+       phoneNumber: getValues("phoneNumber"),
       },
       experience: {
         level: getValues("level"),
@@ -61,6 +72,8 @@ export default function OnboardingForm() {
       console.error("Onboarding kaydı başarısız:", err)
     }
   }
+     
+  
 
   return (
     <form
@@ -71,7 +84,8 @@ export default function OnboardingForm() {
 
       {/* Adım 1: Kişisel Bilgiler */}
       {step === 0 && (
-        <>
+        <> 
+          
           <Input {...register("firstName")} placeholder="Adınız" />
           <Input {...register("lastName")} placeholder="Soyadınız" />
           <Input
@@ -143,6 +157,7 @@ export default function OnboardingForm() {
           </Button>
         )}
       </div>
+     
     </form>
   )
 }

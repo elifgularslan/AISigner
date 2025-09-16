@@ -12,6 +12,7 @@ const onboardingSchema = z.object({
   personal: personalSchema,
   experience: experienceSchema,
   goals: goalsSchema,
+  
 })
 
 export async function saveOnboarding(rawData: unknown) {
@@ -35,12 +36,19 @@ export async function saveOnboarding(rawData: unknown) {
       experienceLevel: data.experience.level,
       interests: data.experience.interest,
       goals: data.goals.goal,
+      availability: data.goals.availability,
+      birthYear: data.personal.birthYear,
+
+      
     },
     create: {
       userId: session.user.id,
       experienceLevel: data.experience.level,
       interests: data.experience.interest,
       goals: data.goals.goal,
+      availability: data.goals.availability,
+    birthYear: data.personal.birthYear,
+
     },
   })
 
