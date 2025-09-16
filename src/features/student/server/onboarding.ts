@@ -33,13 +33,13 @@ export async function saveOnboarding(rawData: unknown) {
     where: { userId: session.user.id },
     update: {
       experienceLevel: data.experience.level,
-      interests: data.experience.tools,
+      interests: data.experience.interest,
       goals: data.goals.goal,
     },
     create: {
       userId: session.user.id,
       experienceLevel: data.experience.level,
-      interests: data.experience.tools,
+      interests: data.experience.interest,
       goals: data.goals.goal,
     },
   })

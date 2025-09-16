@@ -18,12 +18,7 @@ export const personalSchema = z.object({
 
     export const experienceSchema = z.object({
  level: z.enum(["beginner", "intermediate", "advanced"]),
-  tools: z.preprocess(
-  (val) => (typeof val === "string" ? val.split(",").map((t) => t.trim()) : []),
-  z.array(z.string().min(1)).min(1, "En az bir araç belirtin")
-),
-
-
+  interest: z.array(z.string().min(1)).min(1, "En az bir ilgi alanı seçiniz"),
 
 })
 
@@ -34,3 +29,4 @@ export const goalsSchema = z.object({
     message: "Uygunluk seçilmelidir",
   }),
 })
+
