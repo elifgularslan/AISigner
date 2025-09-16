@@ -49,9 +49,11 @@ model StudentProfile {
   id              String   @id @default(cuid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthYear       Int?
   experienceLevel String
   interests       String[]
   goals           String?
+  availability    String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
