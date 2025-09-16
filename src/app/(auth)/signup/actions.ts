@@ -11,10 +11,13 @@ export async function signupAction(
   formData: FormData
 ): Promise<any> {
   const name = formData.get("name") as string
+  const lastName = formData.get("lastName") as string
   const email = formData.get("email") as string
   const password = formData.get("password") as string
+  const phone = formData.get("phone") as string
 
-  const parsed = signupSchema.safeParse({ name, email, password })
+
+  const parsed = signupSchema.safeParse({ name,lastName, email, password , phone })
 
   if (!parsed.success) {
     // Zod hata objesi döndür
@@ -26,7 +29,7 @@ export async function signupAction(
 
   const hashedPassword = await hash(password)
   await prisma.user.create({
-    data: { name, email, password: hashedPassword, role: "STUDENT" },
+    data: { name , lastName , email, password: hashedPassword, phone,  role: "STUDENT" },
   })
 
   // Başarılı -> redirect

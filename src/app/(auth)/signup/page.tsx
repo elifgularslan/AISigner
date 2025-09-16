@@ -48,6 +48,22 @@ export default function SignupPage() {
             )}
           </div>
 
+           {/* Soyadı */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Soyadı
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-800 shadow-sm focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 outline-none transition"
+            />
+            {state.error?.name && (
+              <p className="mt-2 text-sm text-red-500">{state.error.lastName[0]}</p>
+            )}
+          </div>
+
+
           {/* Email */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -62,6 +78,22 @@ export default function SignupPage() {
               <p className="mt-2 text-sm text-red-500">{state.error.email[0]}</p>
             )}
           </div>
+
+          {/* Telefon Numarası */}
+           <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+             Telefon Numaranız
+            </label>
+             <input
+               type="tel"
+               name="phone"
+               className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-800 shadow-sm focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100 outline-none transition"
+               placeholder="05xx xxx xx xx"
+            />
+        {state.error?.phoneNumber && (
+         <p className="mt-2 text-sm text-red-500">{state.error.phoneNumber[0]}</p>
+        )}
+        </div>
 
           {/* Şifre + Göster/Gizle */}
           <div>
