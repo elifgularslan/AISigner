@@ -58,6 +58,7 @@ callbacks: {
     async jwt({ token, user }) {
       if (user) {
         // Kullanıcı giriş yaptıysa, token içine email ve rolünü ekliyoruz
+        token.id = user.id
         token.email = user.email
         token.role = user.role
         
@@ -76,6 +77,7 @@ callbacks: {
        // JWT'den gelen bilgileri session.user içine kopyalıyoruz
       session.user = {
         ...session.user,
+        id: token.id as string | undefined,
         email: token.email?? "",
         role: typeof token.role === "string" ? token.role : undefined,
         
