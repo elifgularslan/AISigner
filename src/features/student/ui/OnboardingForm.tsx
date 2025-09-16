@@ -93,6 +93,7 @@ export default function OnboardingForm() {
             placeholder="Doğum Yılı"
             type="number"
           />
+        
           <Input {...register("phoneNumber")} placeholder="Telefon Numaranız" />
         </>
       )}
