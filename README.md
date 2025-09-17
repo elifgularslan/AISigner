@@ -305,9 +305,34 @@ Bu modül, öğrencinin kayıt sonrası onboarding sürecini ve profil özetini 
 3. Ardından `getMockProfileSummary()` ile sahte AI özeti oluşturulur.
 4. Öğrenci `student-dashboard` sayfasına yönlendirilir ve profil özeti + proje durumu gösterilir.
 
+###  M2 – Uygulama Rehberi
+
+Yeni gelen bir geliştirici aşağıdaki adımları izleyerek M2 sürecini uçtan uca test edebilir:
+
+1. `npm run dev` ile projeyi başlat
+2. http://localhost:3000/signin üzerinden test kullanıcısı ile giriş yap:
+   - E-posta: `student@example.com`
+   - Şifre: `geçici_şifre`
+
+3. Oturum açıldıktan sonra otomatik olarak onboarding formuna yönlendirilirsin
+4. Formu 3 adımda doldur:
+   - Kişisel Bilgiler
+   - Deneyim Seviyesi
+   - Öğrenme Hedefleri
+5. “Gönder” butonuna basıldığında veriler veritabanına kaydedilir (`StudentProfile`)
+6. Ardından `student-dashboard` sayfasına yönlendirilirsin
+7. Dashboard’da:
+   - Hoşgeldin mesajı
+   - Profil özeti (mock AI ile)
+   - Proje durumu (“Henüz proje atanmadı” mesajı)
+
+
+Onboarding sonrası veriyi doğrulamak için ``` npx prisma studio```  komutuyla veritabanını görsel olarak inceleyebilirsiniz.
+
+
 ### **Mock AI Notu**
 
-`getMockProfileSummary()` fonksiyonu şu an sahte veri döndürmektedir. İleride gerçek OpenAI entegrasyonu ile kolayca değiştirilebilir.
+>`getMockProfileSummary()` fonksiyonu şu an sahte veri döndürmektedir. İleride gerçek OpenAI entegrasyonu ile kolayca değiştirilebilir.
 
 ---
 
