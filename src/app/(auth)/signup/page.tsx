@@ -19,7 +19,8 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 px-4 py-12"
+>
       <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-gray-200">
         {/* Logo veya Başlık */}
         <div className="mb-8 text-center">
