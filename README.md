@@ -314,7 +314,7 @@ Yeni gelen bir geliştirici aşağıdaki adımları izleyerek M2 sürecini uçta
    - E-posta: `student@example.com`
    - Şifre: `geçici_şifre`
 
-3. Oturum açıldıktan sonra otomatik olarak onboarding formuna yönlendirilirsin
+3. Oturum açıldıktan sonra http://localhost:3000/student-onboarding  sayfasına git.
 4. Formu 3 adımda doldur:
    - Kişisel Bilgiler
    - Deneyim Seviyesi

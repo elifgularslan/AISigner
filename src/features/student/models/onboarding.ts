@@ -30,3 +30,10 @@ export const goalsSchema = z.object({
   }),
 })
 
+export const onboardingSchema = z.object({
+  personal: personalSchema,
+  experience: experienceSchema,
+  goals: goalsSchema,
+});
+
+export type OnboardingFormData = z.infer<typeof onboardingSchema>;
