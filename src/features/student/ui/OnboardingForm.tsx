@@ -94,7 +94,7 @@ const onNext = async () => {
       {/* Step 1: Experience */}
       {step === 1 && (
         <>
-          <div className="space-y-2">S
+          <div className="space-y-2">
             <label htmlFor="experience.level">Seviye</label>
             <select {...register("experience.level")} id="experience.level" className="border p-2 rounded w-full">
               <option value="">Seçiniz</option>

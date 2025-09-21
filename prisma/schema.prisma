@@ -30,9 +30,19 @@ model User {
   createdAt DateTime @default(now())                
   updatedAt DateTime @updatedAt     
 
-   emailVerified DateTime?
+
+
+  emailVerified DateTime?
   sessions      Session[]
-    studentProfile  StudentProfile? 
+  studentProfile  StudentProfile?  @relation("StudentUser") // Öğrenci profili ilişkisi
+  
+  // mentorun eşleştiği öğrencileri tutar
+  menteeProfiles StudentProfile[] @relation("StudentMentor")
+  
+  
+
+  
+
 
 }
 
@@ -48,12 +58,18 @@ model Session {
 model StudentProfile {
   id              String   @id @default(cuid())
   userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User     @relation("StudentUser", fields: [userId], references: [id], onDelete: Cascade)
   birthYear       Int?
   experienceLevel String
   interests       String[]
   goals           String?
   availability    String?
+
+  mentorId        String?
+  mentor          User?    @relation("StudentMentor", fields: [mentorId], references: [id])
+
+
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
