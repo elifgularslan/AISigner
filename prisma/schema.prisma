@@ -73,3 +73,22 @@ model StudentProfile {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+
+model ProjectTemplate{
+  id             String @id @default(cuid())
+  title          String
+  description    String     //md formatı
+  track          String[]   //["web" , "mobile"]
+  difficulty     Difficulty
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+}
+
+enum Difficulty{
+  HARD
+  MEDIUM
+  EASY
+}
