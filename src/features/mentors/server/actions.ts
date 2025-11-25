@@ -177,6 +177,7 @@ export async function assignProjectToStudent(
   }
 }
 
+
 // Proje durumunu güncelle
 export async function updateProjectStatus(
   assignedProjectId: string,
@@ -211,6 +212,19 @@ export async function updateProjectStatus(
     });
   } catch (error) {
     console.error("Error updating project status:", error);
+    throw error;
+  }
+}
+// Proje atamasını sil (Geri al)
+export async function unassignProject(assignedProjectId: string) {
+  try {
+    return await prisma.assignedProject.delete({
+      where: {
+        id: assignedProjectId,
+      },
+    });
+  } catch (error) {
+    console.error("Error unassigning project:", error);
     throw error;
   }
 }

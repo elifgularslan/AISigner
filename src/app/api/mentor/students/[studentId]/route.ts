@@ -1,33 +1,4 @@
-// src/app/api/mentor/students/[studentId]/route.ts
-/*import { NextResponse } from "next/server";
-import { getStudentDetail } from "@/features/mentors/server/actions";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { studentId: string } }
-) {
-  try {
-    // Auth kontrolü - mentorId'yi session'dan alın
-    const mentorId = "mentor-id-from-session"; // Gerçek mentor ID'si
-    
-    const student = await getStudentDetail(params.studentId, mentorId);
-    
-    if (!student) {
-      return NextResponse.json(
-        { error: "Student not found or not assigned to you" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(student);
-  } catch (error) {
-    console.error("GET /api/mentor/students/[studentId] error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch student detail" },
-      { status: 500 }
-    );
-  }
-} */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/nextauth"
@@ -35,7 +6,7 @@ import { getStudentDetail } from "@/features/mentors/server/actions";
 
 export async function GET(
   req: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params:Promise< { studentId: string } >}
 ) {
   try {
     // Session’dan mentor bilgisi al
@@ -49,9 +20,10 @@ export async function GET(
     }
 
     const mentorId = session.user.id; // 🔑 artık gerçek mentor ID
+    const { studentId } = await params;
 
     // ensure studentId is provided and mentorId is present (narrows types)
-    const studentId = params.studentId;
+   
     if (!studentId) {
       return NextResponse.json(
         { error: "Student ID is required" },

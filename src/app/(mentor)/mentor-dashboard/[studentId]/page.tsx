@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { ArrowLeft, User, Calendar, Target, Clock, BookOpen, Plus, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, User, Calendar, Target, Clock, BookOpen, Plus, CheckCircle, AlertCircle,Trash2 } from "lucide-react";
 import Link from "next/link";
 
 type ProjectTemplate = {
@@ -55,7 +55,8 @@ export default function StudentDetailPage() {
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [projectTemplates, setProjectTemplates] = useState<ProjectTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [assigning, setAssigning] = useState(false);
+ // const [assigning, setAssigning] = useState(false);
+  const [assigningId, setAssigningId] = useState<string | null>(null)
   const [showAssignModal, setShowAssignModal] = useState(false);
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function StudentDetailPage() {
     if (!student?.studentProfile) return;
 
     try {
-      setAssigning(true);
+     setAssigningId(projectTemplateId);
       const res = await fetch("/api/mentor/assign-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,7 +120,28 @@ export default function StudentDetailPage() {
       console.error("Failed to assign project:", error);
       alert("Proje atama başarısız");
     } finally {
-      setAssigning(false);
+      setAssigningId(null);
+    }
+  }
+  async function handleDeleteAssignment(assignedProjectId: string) {
+    if (!confirm("Bu proje atamasını kaldırmak istediğinizden emin misiniz?")) return;
+
+    try {
+      const res = await fetch("/api/mentor/unassign-project", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedProjectId }),
+      });
+
+      if (res.ok) {
+        // Listeyi yenile
+        await loadStudentDetail();
+      } else {
+        alert("Silme işlemi başarısız oldu.");
+      }
+    } catch (error) {
+      console.error("Silme hatası:", error);
+      alert("Bir hata oluştu.");
     }
   }
 
@@ -273,7 +295,17 @@ export default function StudentDetailPage() {
                     const StatusIcon = statusInfo.icon;
                     
                     return (
-                      <div key={project.id} className="border rounded-lg p-4">
+                      <div key={project.id} className="border rounded-lg p-4 relative group">
+      
+ 
+                       <button 
+                       onClick={() => handleDeleteAssignment(project.id)}
+                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 z-10"
+                         title="Atamayı Kaldır"
+                          >
+                           <Trash2 className="w-4 h-4" />
+                        </button>
+                      
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-medium text-gray-900">{project.projectTemplate.title}</h3>
                           <div className="flex gap-2">
@@ -343,6 +375,7 @@ export default function StudentDetailPage() {
                     const isAssigned = getAssignedProjectIds().includes(template.id);
                     const difficultyInfo = difficultyConfig[template.difficulty];
                     
+                    const isLoadingThis = assigningId === template.id; //'isLoading' durumu sadece o anki proje ID'si 'assigningId' ile eşleşiyorsa true olur.
                     return (
                       <div key={template.id} className={`border rounded-lg p-4 ${isAssigned ? 'bg-gray-50 border-gray-300' : 'hover:shadow-md transition-shadow'}`}>
                         <div className="flex justify-between items-start mb-2">
@@ -370,15 +403,19 @@ export default function StudentDetailPage() {
                         </div>
                         
                         <button
-                          onClick={() => assignProject(template.id)}
-                          disabled={isAssigned || assigning}
+                        onClick={() => assignProject(template.id)}
+                          // Eğer bu proje zaten atanmışsa disable et
+                          // VEYA şu an HERHANGİ bir proje atanıyorsa (assigningId !== null) da butonu kilitle.
+                          // (Bu, aynı anda birden fazla projeye basılmasını engeller)
+                          disabled={isAssigned || assigningId !== null}
+                         
                           className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
                             isAssigned 
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : 'bg-green-600 hover:bg-green-700 text-white'
                           }`}
                         >
-                          {isAssigned ? 'Zaten Atanmış' : assigning ? 'Atanıyor...' : 'Projeyi Ata'}
+                         {isAssigned ? 'Zaten Atanmış' : (isLoadingThis ? 'Atanıyor...' : 'Projeyi Ata')}
                         </button>
                       </div>
                     );
