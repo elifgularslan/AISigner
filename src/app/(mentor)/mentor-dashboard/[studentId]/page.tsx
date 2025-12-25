@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, User, Calendar, Target, Clock, BookOpen, Plus, CheckCircle, AlertCircle,Trash2 } from "lucide-react";
 import Link from "next/link";
+import { Sparkles,  Link as LinkIcon, Map } from "lucide-react"; 
+import { createRoadmapWithAI, deleteRoadmapStep } from "@/features/roadmap/server/action"; 
 
 type ProjectTemplate = {
   id: string;
@@ -30,6 +32,16 @@ type StudentDetail = {
       status: string;
       projectTemplate: ProjectTemplate;
       createdAt: string;
+      roadmap?: {
+        id: string;
+        steps: {
+          id: string;
+          title: string;
+          description: string;
+          duration: string;
+          resources: string[];
+        }[];
+      } | null;
     }[];
   } | null;
 };
@@ -58,6 +70,9 @@ export default function StudentDetailPage() {
  // const [assigning, setAssigning] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null)
   const [showAssignModal, setShowAssignModal] = useState(false);
+
+ // Roadmap oluşturulurken butonun loading dönmesi için state
+  const [creatingRoadmapId, setCreatingRoadmapId] = useState<string | null>(null);
 
   useEffect(() => {
     loadStudentDetail();
@@ -142,6 +157,35 @@ export default function StudentDetailPage() {
     } catch (error) {
       console.error("Silme hatası:", error);
       alert("Bir hata oluştu.");
+    }
+  }
+
+  async function handleCreateRoadmap(projectId: string) {
+    setCreatingRoadmapId(projectId);
+    try {
+      const result = await createRoadmapWithAI(projectId);
+      if (result.success) {
+        await loadStudentDetail(); // Sayfadaki verileri yenile
+        alert("Roadmap başarıyla oluşturuldu!");
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      alert("Bir hata oluştu");
+    } finally {
+      setCreatingRoadmapId(null);
+    }
+  }
+
+  //  Roadmap Adımı Silme Fonksiyonu
+  async function handleDeleteStep(stepId: string) {
+    if(!confirm("Bu adımı silmek istediğinize emin misiniz?")) return;
+    
+    const res = await deleteRoadmapStep(stepId);
+    if(res.success) {
+      loadStudentDetail(); // Listeyi yenile
+    } else {
+      alert("Silinemedi");
     }
   }
 
@@ -340,6 +384,88 @@ export default function StudentDetailPage() {
                             {new Date(project.createdAt).toLocaleDateString("tr-TR")}
                           </span>
                         </div>
+                        {/* --- ROADMAP UI BAŞLANGIÇ --- */}
+  <div className="mt-6 pt-6 border-t border-gray-100">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-sm font-semibold text-gray-900 flex items-center">
+          <Map className="w-4 h-4 mr-2 text-purple-600" />
+          Proje Yol Haritası
+        </h4>
+        
+        {/* Eğer roadmap yoksa oluştur butonu, varsa adım sayısı */}
+        {!project.roadmap ? (
+          <button 
+            onClick={() => handleCreateRoadmap(project.id)}
+            disabled={creatingRoadmapId === project.id}
+            className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-full hover:bg-purple-700 flex items-center transition-colors disabled:opacity-50"
+          >
+            {creatingRoadmapId === project.id ? (
+               "Oluşturuluyor..."
+            ) : (
+               <>
+                 <Sparkles className="w-3 h-3 mr-1" />
+                 AI ile Roadmap Oluştur
+               </>
+            )}
+          </button>
+        ) : (
+          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100">
+            {project.roadmap.steps.length} Adım
+          </span>
+        )}
+      </div>
+
+      {/* Adımlar Listesi */}
+      {project.roadmap && (
+        <div className="space-y-3 pl-4 border-l-2 border-purple-100 ml-2 relative">
+          {project.roadmap.steps.length === 0 && <p className="text-sm text-gray-500">Henüz adım yok.</p>}
+          
+          {project.roadmap.steps.map((step: any, index: number) => (
+            <div key={step.id} className="relative group bg-white border border-gray-100 p-3 rounded-lg shadow-sm hover:shadow-md transition-all">
+               {/* Sıra Numarası */}
+               <div className="absolute -left-[25px] top-3 w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">
+                 {index + 1}
+               </div>
+
+               {/* Silme Butonu (Hover olunca görünür) */}
+               <button
+                 onClick={() => handleDeleteStep(step.id)}
+                 className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                 title="Adımı Sil"
+               >
+                 <Trash2 className="w-3.5 h-3.5" />
+               </button>
+
+               <div className="flex justify-between items-start mb-1 pr-6">
+                 <strong className="text-gray-800 text-sm">{step.title}</strong>
+                 <span className="text-[10px] text-gray-500 flex items-center bg-gray-50 px-1.5 py-0.5 rounded border">
+                   <Clock className="w-3 h-3 mr-1" /> {step.duration}
+                 </span>
+               </div>
+               
+               <p className="text-gray-600 mb-2 text-xs leading-relaxed">{step.description}</p>
+               
+               {step.resources.length > 0 && (
+                 <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
+                   {step.resources.map((url: string, i: number) => (
+                     <a 
+                      key={i} 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline flex items-center bg-blue-50 px-2 py-1 rounded"
+                     >
+                       <LinkIcon className="w-3 h-3 mr-1" /> Kaynak {i+1}
+                     </a>
+                   ))}
+                 </div>
+               )}
+            </div>
+          ))}
+        </div>
+      )}
+  </div>
+ {/* --- ROADMAP UI BİTİŞ --- */} 
                       </div>
                     );
                   })}
@@ -349,6 +475,8 @@ export default function StudentDetailPage() {
           </div>
         </div>
       )}
+
+      
 
       {/* Project Assignment Modal */}
       {showAssignModal && (

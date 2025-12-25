@@ -104,10 +104,39 @@ model AssignedProject {
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  roadmap Roadmap?
 }
 
 enum AssignmentStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+}
+
+model Roadmap {
+  id                String          @id @default(cuid())
+  assignedProjectId String          @unique
+  assignedProject   AssignedProject @relation(fields: [assignedProjectId], references: [id], onDelete: Cascade)
+  
+  steps             RoadmapStep[]
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model RoadmapStep {
+  id          String   @id @default(cuid())
+  roadmapId   String
+  roadmap     Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?  @db.Text
+  duration    String   // örn: "1 Hafta"
+  resources   String[] // Link listesi
+  order       Int      // Sıralama için
+  isCompleted Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

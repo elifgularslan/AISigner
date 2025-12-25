@@ -85,6 +85,16 @@ export async function getStudentDetail(studentId: string, mentorId: string) {
             assignedProjects: {
               include: {
                 projectTemplate: true,
+                
+                roadmap: {
+                  include: {
+                    steps: {
+                      orderBy: {
+                        order: "asc"
+                      }
+                    }
+                  }
+                }
               },
               orderBy: {
                 createdAt: "desc",
