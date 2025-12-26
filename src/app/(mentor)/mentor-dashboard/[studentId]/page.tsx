@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { ArrowLeft, User, Calendar, Target, Clock, BookOpen, Plus, CheckCircle, AlertCircle,Trash2 } from "lucide-react";
+import { useParams, useSearchParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles,  Link as LinkIcon, Map } from "lucide-react"; 
-import { createRoadmapWithAI, deleteRoadmapStep } from "@/features/roadmap/server/action"; 
+import { 
+  ArrowLeft, User, BookOpen, Plus, CheckCircle, AlertCircle, 
+  Trash2, Map, Sparkles, Clock 
+} from "lucide-react";
+import { createRoadmapWithAI } from "@/features/roadmap/server/actions";
+import RoadmapApproval from "@/features/roadmap/ui/RoadmapApproval";
 
+// --- TİP TANIMLAMALARI ---
 type ProjectTemplate = {
   id: string;
   title: string;
@@ -34,12 +38,14 @@ type StudentDetail = {
       createdAt: string;
       roadmap?: {
         id: string;
+        isPublished: boolean;
         steps: {
           id: string;
           title: string;
-          description: string;
+          description: string | null;
           duration: string;
-          resources: string[];
+          order: number;
+          resources: string[]; // ✅ Resources eklendi
         }[];
       } | null;
     }[];
@@ -61,18 +67,22 @@ const difficultyConfig = {
 export default function StudentDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  
   const studentId = params.studentId as string;
   const activeTab = searchParams.get("tab") || "profile";
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [projectTemplates, setProjectTemplates] = useState<ProjectTemplate[]>([]);
   const [loading, setLoading] = useState(true);
- // const [assigning, setAssigning] = useState(false);
-  const [assigningId, setAssigningId] = useState<string | null>(null)
+  
+  const [assigningId, setAssigningId] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
-
- // Roadmap oluşturulurken butonun loading dönmesi için state
   const [creatingRoadmapId, setCreatingRoadmapId] = useState<string | null>(null);
+
+  // ✅ Sayfa Yenileme Tetikleyicisi
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     loadStudentDetail();
@@ -84,18 +94,23 @@ export default function StudentDetailPage() {
 
   async function loadStudentDetail() {
     try {
-      // Bu API endpoint'ini oluşturmanız gerekecek
       const res = await fetch(`/api/mentor/students/${studentId}`);
       if (res.ok) {
         const data = await res.json();
         setStudent(data);
       }
     } catch (error) {
-      console.error("Failed to load student detail:", error);
+      console.error("Hata:", error);
     } finally {
       setLoading(false);
     }
   }
+
+  // Alt bileşenden tetiklenen yenileme fonksiyonu
+  const handleRefresh = () => {
+    loadStudentDetail();
+    setRefreshKey(prev => prev + 1); // Key değişince bileşen sıfırlanır
+  };
 
   async function loadProjectTemplates() {
     try {
@@ -105,15 +120,14 @@ export default function StudentDetailPage() {
         setProjectTemplates(data);
       }
     } catch (error) {
-      console.error("Failed to load project templates:", error);
+      console.error("Hata:", error);
     }
   }
 
   async function assignProject(projectTemplateId: string) {
     if (!student?.studentProfile) return;
-
     try {
-     setAssigningId(projectTemplateId);
+      setAssigningId(projectTemplateId);
       const res = await fetch("/api/mentor/assign-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,69 +139,55 @@ export default function StudentDetailPage() {
 
       if (res.ok) {
         await loadStudentDetail();
-        setShowAssignModal(false);
+        closeModal();
         alert("Proje başarıyla atandı!");
       } else {
-        const error = await res.json();
-        alert(error.error || "Proje atama başarısız");
+        alert("Proje atama başarısız");
       }
     } catch (error) {
-      console.error("Failed to assign project:", error);
-      alert("Proje atama başarısız");
+      alert("Hata oluştu");
     } finally {
       setAssigningId(null);
     }
   }
+
   async function handleDeleteAssignment(assignedProjectId: string) {
     if (!confirm("Bu proje atamasını kaldırmak istediğinizden emin misiniz?")) return;
-
     try {
       const res = await fetch("/api/mentor/unassign-project", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assignedProjectId }),
       });
-
-      if (res.ok) {
-        // Listeyi yenile
-        await loadStudentDetail();
-      } else {
-        alert("Silme işlemi başarısız oldu.");
-      }
+      if (res.ok) await loadStudentDetail();
+      else alert("Silme başarısız.");
     } catch (error) {
-      console.error("Silme hatası:", error);
-      alert("Bir hata oluştu.");
+      alert("Hata oluştu.");
     }
   }
 
   async function handleCreateRoadmap(projectId: string) {
     setCreatingRoadmapId(projectId);
     try {
-      const result = await createRoadmapWithAI(projectId);
+      const result = await createRoadmapWithAI(projectId, pathname);
       if (result.success) {
-        await loadStudentDetail(); // Sayfadaki verileri yenile
+        handleRefresh(); // Oluşturma sonrası yenile
         alert("Roadmap başarıyla oluşturuldu!");
       } else {
         alert(result.error);
       }
     } catch (error) {
-      alert("Bir hata oluştu");
+      alert("Hata oluştu");
     } finally {
       setCreatingRoadmapId(null);
     }
   }
 
-  //  Roadmap Adımı Silme Fonksiyonu
-  async function handleDeleteStep(stepId: string) {
-    if(!confirm("Bu adımı silmek istediğinize emin misiniz?")) return;
-    
-    const res = await deleteRoadmapStep(stepId);
-    if(res.success) {
-      loadStudentDetail(); // Listeyi yenile
-    } else {
-      alert("Silinemedi");
-    }
-  }
+  // ✅ Modal Kapatma: URL'i temizler
+  const closeModal = () => {
+    setShowAssignModal(false);
+    router.replace(pathname); 
+  };
 
   const getStudentName = () => {
     if (!student) return "";
@@ -198,28 +198,8 @@ export default function StudentDetailPage() {
     return student?.studentProfile?.assignedProjects?.map(p => p.projectTemplate.id) || [];
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Öğrenci detayları yükleniyor...</span>
-      </div>
-    );
-  }
-
-  if (!student) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Öğrenci bulunamadı</h3>
-          <p className="text-gray-600 mb-4">Bu öğrenci size atanmamış olabilir.</p>
-          <Link href="/mentor-dashboard" className="text-blue-600 hover:text-blue-800">
-            ← Dashboard'a dön
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-10 text-center">Yükleniyor...</div>;
+  if (!student) return <div className="p-10 text-center">Öğrenci bulunamadı.</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -234,238 +214,77 @@ export default function StudentDetailPage() {
         </div>
       </div>
 
-      {/* Profile Section */}
       {!student.studentProfile ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-          <div className="flex">
-            <AlertCircle className="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0" />
-            <div>
-              <h3 className="text-lg font-medium text-yellow-800">Profil Tamamlanmamış</h3>
-              <p className="text-yellow-700 mt-1">
-                Bu öğrenci henüz profilini tamamlamamış. Proje atayabilmek için öğrencinin profilini doldurmasını bekleyin.
-              </p>
-            </div>
-          </div>
+        <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
+           <p className="text-yellow-800">Profil tamamlanmamış.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Info */}
+          {/* Profil Kartı */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Profil Bilgileri
-              </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Deneyim Seviyesi</label>
-                  <p className="text-gray-900">{student.studentProfile.experienceLevel}</p>
-                </div>
-
-                {student.studentProfile.birthYear && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Yaş</label>
-                    <p className="text-gray-900">~{new Date().getFullYear() - student.studentProfile.birthYear}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700">İlgi Alanları</label>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {student.studentProfile.interests.map((interest, index) => (
-                      <span key={index} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {student.studentProfile.goals && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Hedefler</label>
-                    <p className="text-gray-900 text-sm">{student.studentProfile.goals}</p>
-                  </div>
-                )}
-
-                {student.studentProfile.availability && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Uygunluk</label>
-                    <p className="text-gray-900 text-sm">{student.studentProfile.availability}</p>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => {
-                  loadProjectTemplates();
-                  setShowAssignModal(true);
-                }}
-                className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+            <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-4 flex items-center"><User className="w-5 h-5 mr-2" /> Profil</h2>
+              <p className="text-gray-900 mb-4">Deneyim: {student.studentProfile.experienceLevel}</p>
+              <button 
+                onClick={() => { loadProjectTemplates(); setShowAssignModal(true); }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex justify-center items-center"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Proje Ata
+                <Plus className="w-4 h-4 mr-2" /> Proje Ata
               </button>
             </div>
           </div>
 
-          {/* Projects Section */}
+          {/* Projeler Kartı */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2" />
-                Atanmış Projeler ({student.studentProfile.assignedProjects.length})
-              </h2>
-
+            <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-4 flex items-center"><BookOpen className="w-5 h-5 mr-2" /> Projeler</h2>
+              
               {student.studentProfile.assignedProjects.length === 0 ? (
-                <div className="text-center py-8">
-                  <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Henüz proje atanmamış</p>
-                  <button
-                    onClick={() => {
-                      loadProjectTemplates();
-                      setShowAssignModal(true);
-                    }}
-                    className="mt-3 text-green-600 hover:text-green-800 font-medium"
-                  >
-                    İlk projeyi atayın
-                  </button>
-                </div>
+                <p className="text-center py-8 text-gray-500">Proje atanmamış.</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {student.studentProfile.assignedProjects.map(project => {
-                    const statusInfo = statusConfig[project.status as keyof typeof statusConfig];
-                    const difficultyInfo = difficultyConfig[project.projectTemplate.difficulty as keyof typeof difficultyConfig];
-                    const StatusIcon = statusInfo.icon;
-                    
+                    const statusInfo = statusConfig[project.status as keyof typeof statusConfig] || statusConfig.PENDING;
                     return (
                       <div key={project.id} className="border rounded-lg p-4 relative group">
-      
- 
-                       <button 
-                       onClick={() => handleDeleteAssignment(project.id)}
-                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 z-10"
-                         title="Atamayı Kaldır"
-                          >
-                           <Trash2 className="w-4 h-4" />
+                        <button onClick={() => handleDeleteAssignment(project.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-600 p-1">
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                      
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium text-gray-900">{project.projectTemplate.title}</h3>
-                          <div className="flex gap-2">
-                            <span className={`px-2 py-1 text-xs rounded-full ${statusInfo.color}`}>
-                              <StatusIcon className="w-3 h-3 inline mr-1" />
-                              {statusInfo.label}
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${difficultyInfo.color}`}>
-                              {difficultyInfo.label}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {project.projectTemplate.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-wrap gap-1">
-                            {project.projectTemplate.track.slice(0, 3).map((tag, index) => (
-                              <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
-                                {tag}
-                              </span>
-                            ))}
-                            {project.projectTemplate.track.length > 3 && (
-                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded">
-                                +{project.projectTemplate.track.length - 3}
-                              </span>
+                        <h3 className="font-medium text-gray-900">{project.projectTemplate.title}</h3>
+                        <span className={`inline-flex items-center text-xs px-2 py-1 rounded-full mt-1 ${statusInfo.color}`}>
+                          {statusInfo.label}
+                        </span>
+                        <p className="text-sm text-gray-600 mt-2">{project.projectTemplate.description}</p>
+
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-sm font-semibold flex items-center text-gray-900">
+                              <Map className="w-4 h-4 mr-2 text-purple-600" /> Yol Haritası
+                            </h4>
+                            {!project.roadmap && (
+                              <button 
+                                onClick={() => handleCreateRoadmap(project.id)}
+                                disabled={creatingRoadmapId === project.id}
+                                className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-full hover:bg-purple-700 flex items-center"
+                              >
+                                {creatingRoadmapId === project.id ? "Oluşturuluyor..." : <><Sparkles className="w-3 h-3 mr-1" /> AI ile Oluştur</>}
+                              </button>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(project.createdAt).toLocaleDateString("tr-TR")}
-                          </span>
+                          
+                          {/* ✅ ROADMAP APPROVAL (Refresh Logic Eklendi) */}
+                          {project.roadmap && (
+                            <RoadmapApproval 
+                              key={refreshKey} // <-- Bileşeni sıfırlar
+                              roadmapId={project.roadmap.id}
+                              steps={project.roadmap.steps}
+                              isPublished={project.roadmap.isPublished}
+                              studentName={getStudentName()}
+                              path={pathname}
+                              onRefresh={handleRefresh} // <-- Geri arama fonksiyonu
+                            />
+                          )}
                         </div>
-                        {/* --- ROADMAP UI BAŞLANGIÇ --- */}
-  <div className="mt-6 pt-6 border-t border-gray-100">
-      <div className="flex justify-between items-center mb-4">
-        <h4 className="text-sm font-semibold text-gray-900 flex items-center">
-          <Map className="w-4 h-4 mr-2 text-purple-600" />
-          Proje Yol Haritası
-        </h4>
-        
-        {/* Eğer roadmap yoksa oluştur butonu, varsa adım sayısı */}
-        {!project.roadmap ? (
-          <button 
-            onClick={() => handleCreateRoadmap(project.id)}
-            disabled={creatingRoadmapId === project.id}
-            className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-full hover:bg-purple-700 flex items-center transition-colors disabled:opacity-50"
-          >
-            {creatingRoadmapId === project.id ? (
-               "Oluşturuluyor..."
-            ) : (
-               <>
-                 <Sparkles className="w-3 h-3 mr-1" />
-                 AI ile Roadmap Oluştur
-               </>
-            )}
-          </button>
-        ) : (
-          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100">
-            {project.roadmap.steps.length} Adım
-          </span>
-        )}
-      </div>
-
-      {/* Adımlar Listesi */}
-      {project.roadmap && (
-        <div className="space-y-3 pl-4 border-l-2 border-purple-100 ml-2 relative">
-          {project.roadmap.steps.length === 0 && <p className="text-sm text-gray-500">Henüz adım yok.</p>}
-          
-          {project.roadmap.steps.map((step: any, index: number) => (
-            <div key={step.id} className="relative group bg-white border border-gray-100 p-3 rounded-lg shadow-sm hover:shadow-md transition-all">
-               {/* Sıra Numarası */}
-               <div className="absolute -left-[25px] top-3 w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">
-                 {index + 1}
-               </div>
-
-               {/* Silme Butonu (Hover olunca görünür) */}
-               <button
-                 onClick={() => handleDeleteStep(step.id)}
-                 className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                 title="Adımı Sil"
-               >
-                 <Trash2 className="w-3.5 h-3.5" />
-               </button>
-
-               <div className="flex justify-between items-start mb-1 pr-6">
-                 <strong className="text-gray-800 text-sm">{step.title}</strong>
-                 <span className="text-[10px] text-gray-500 flex items-center bg-gray-50 px-1.5 py-0.5 rounded border">
-                   <Clock className="w-3 h-3 mr-1" /> {step.duration}
-                 </span>
-               </div>
-               
-               <p className="text-gray-600 mb-2 text-xs leading-relaxed">{step.description}</p>
-               
-               {step.resources.length > 0 && (
-                 <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-50">
-                   {step.resources.map((url: string, i: number) => (
-                     <a 
-                      key={i} 
-                      href={url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline flex items-center bg-blue-50 px-2 py-1 rounded"
-                     >
-                       <LinkIcon className="w-3 h-3 mr-1" /> Kaynak {i+1}
-                     </a>
-                   ))}
-                 </div>
-               )}
-            </div>
-          ))}
-        </div>
-      )}
-  </div>
- {/* --- ROADMAP UI BİTİŞ --- */} 
                       </div>
                     );
                   })}
@@ -476,80 +295,31 @@ export default function StudentDetailPage() {
         </div>
       )}
 
-      
-
-      {/* Project Assignment Modal */}
+      {/* ✅ Modal Düzeltildi: Siyah ekran yok, URL temizleniyor */}
       {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b">
               <h2 className="text-xl font-semibold">Proje Ata - {getStudentName()}</h2>
-              <button
-                onClick={() => setShowAssignModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 font-bold text-xl">×</button>
             </div>
-
-            <div className="p-6">
-              {projectTemplates.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">Proje şablonu bulunamadı</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {projectTemplates.map(template => {
-                    const isAssigned = getAssignedProjectIds().includes(template.id);
-                    const difficultyInfo = difficultyConfig[template.difficulty];
-                    
-                    const isLoadingThis = assigningId === template.id; //'isLoading' durumu sadece o anki proje ID'si 'assigningId' ile eşleşiyorsa true olur.
-                    return (
-                      <div key={template.id} className={`border rounded-lg p-4 ${isAssigned ? 'bg-gray-50 border-gray-300' : 'hover:shadow-md transition-shadow'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium text-gray-900">{template.title}</h3>
-                          <span className={`px-2 py-1 text-xs rounded-full ${difficultyInfo.color}`}>
-                            {difficultyInfo.label}
-                          </span>
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {template.description}
-                        </p>
-                        
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {template.track.slice(0, 3).map((tag, index) => (
-                            <span key={index} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                              {tag}
-                            </span>
-                          ))}
-                          {template.track.length > 3 && (
-                            <span className="px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded">
-                              +{template.track.length - 3} daha
-                            </span>
-                          )}
-                        </div>
-                        
-                        <button
+            <div className="p-6 grid gap-4 md:grid-cols-2">
+               {projectTemplates.map(template => {
+                 const isAssigned = getAssignedProjectIds().includes(template.id);
+                 return (
+                   <div key={template.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                     <h3 className="font-medium">{template.title}</h3>
+                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{template.description}</p>
+                     <button
                         onClick={() => assignProject(template.id)}
-                          // Eğer bu proje zaten atanmışsa disable et
-                          // VEYA şu an HERHANGİ bir proje atanıyorsa (assigningId !== null) da butonu kilitle.
-                          // (Bu, aynı anda birden fazla projeye basılmasını engeller)
-                          disabled={isAssigned || assigningId !== null}
-                         
-                          className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                            isAssigned 
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-green-600 hover:bg-green-700 text-white'
-                          }`}
-                        >
-                         {isAssigned ? 'Zaten Atanmış' : (isLoadingThis ? 'Atanıyor...' : 'Projeyi Ata')}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                        disabled={isAssigned || assigningId !== null}
+                        className={`w-full py-2 rounded text-sm text-white ${isAssigned ? 'bg-gray-300' : 'bg-green-600 hover:bg-green-700'}`}
+                     >
+                        {isAssigned ? 'Atanmış' : 'Ata'}
+                     </button>
+                   </div>
+                 )
+               })}
             </div>
           </div>
         </div>

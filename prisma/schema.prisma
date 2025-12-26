@@ -118,6 +118,7 @@ model Roadmap {
   id                String          @id @default(cuid())
   assignedProjectId String          @unique
   assignedProject   AssignedProject @relation(fields: [assignedProjectId], references: [id], onDelete: Cascade)
+  isPublished Boolean @default(false)
   
   steps             RoadmapStep[]
   
@@ -136,6 +137,7 @@ model RoadmapStep {
   resources   String[] // Link listesi
   order       Int      // Sıralama için
   isCompleted Boolean  @default(false)
+  
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

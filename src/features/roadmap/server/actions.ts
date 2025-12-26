@@ -3,9 +3,10 @@
 
 import { prisma } from "@/lib/db";
 import { generateMockRoadmap } from "./generate";
+import { revalidatePath } from "next/cache";
 
 // 1. AI ile Roadmap Oluştur ve Kaydet
-export async function createRoadmapWithAI(assignedProjectId: string) {
+export async function createRoadmapWithAI(assignedProjectId: string,path: string ) {
   try {
     // Proje detaylarını çek
     const assignedProject = await prisma.assignedProject.findUnique({
@@ -46,7 +47,11 @@ export async function createRoadmapWithAI(assignedProjectId: string) {
         }
       }
     });
-
+    
+    if (path) {
+      revalidatePath(path);
+    }
+  
     return { success: true, data: newRoadmap };
 
   } catch (error: any) {
@@ -55,12 +60,54 @@ export async function createRoadmapWithAI(assignedProjectId: string) {
   }
 }
 
-// 2. Roadmap Adımını Sil
-export async function deleteRoadmapStep(stepId: string) {
+
+
+// 1. ADIM GÜNCELLEME (Mentor metni veya süreyi değiştirmek isterse)
+export async function updateRoadmapStep(
+  stepId: string, 
+  data: { title: string; description: string; duration: string },
+  path: string
+) {
   try {
-    await prisma.roadmapStep.delete({ where: { id: stepId } });
+    await prisma.roadmapStep.update({
+      where: { id: stepId },
+      data: {
+        title: data.title,
+        description: data.description,
+        duration: data.duration
+      }
+    });
+    revalidatePath(path); // Sayfayı yenile
     return { success: true };
   } catch (error) {
+    console.error("Güncelleme hatası:", error);
+    return { error: "Güncelleme başarısız." };
+  }
+}
+
+// 2. ADIM SİLME (Gereksiz adımı kaldırma)
+export async function deleteRoadmapStep(stepId: string, path: string) {
+  try {
+    await prisma.roadmapStep.delete({ where: { id: stepId } });
+    revalidatePath(path); // Sayfayı yenile (Listeden hemen silinmesi için)
+    return { success: true };
+  } catch (error) {
+    console.error("Silme hatası:", error);
     return { error: "Silme başarısız" };
+  }
+}
+
+// 3. ROADMAP ONAYLAMA (Öğrenciye görünür yapma)
+export async function approveRoadmap(roadmapId: string, path: string) {
+  try {
+    await prisma.roadmap.update({
+      where: { id: roadmapId },
+      data: { isPublished: true }, // <-- Kritik Nokta: Artık öğrenci görebilir
+    });
+    revalidatePath(path);
+    return { success: true };
+  } catch (error) {
+    console.error("Onaylama hatası:", error);
+    return { error: "Onaylama işlemi başarısız." };
   }
 }

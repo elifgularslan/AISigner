@@ -23,6 +23,13 @@ export default async function StudentDashboardPage() {
       assignedProjects: {
         include: {
           projectTemplate: true, // Projenin başlık, açıklama vb. detaylarını almak için
+          roadmap: {
+            include: {
+              steps: {
+                orderBy: { order: 'asc' }
+              }
+            }
+          }
         },
         orderBy: {
           createdAt: "desc",
@@ -125,8 +132,49 @@ export default async function StudentDashboardPage() {
                     <span className="text-xs text-gray-500">
                       Atanma Tarihi: {new Date(project.createdAt).toLocaleDateString("tr-TR")}
                     </span>
-                 
                   </div>
+
+                  {/* Roadmap Kontrolü: Sadece Yayınlanmışsa Göster */}
+                  {project.roadmap && project.roadmap.isPublished && (
+                    <div className="mt-4 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                      <h4 className="font-semibold text-purple-900 mb-3 text-sm flex items-center">
+                        <span className="mr-2">📍</span> Senin İçin Hazırlanan Yol Haritası
+                      </h4>
+                      <div className="space-y-3">
+                        {project.roadmap.steps.map((step, idx) => (
+                          <div key={step.id} className="flex gap-3 items-start">
+                            <span className="bg-purple-200 text-purple-800 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                              {idx + 1}
+                            </span>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{step.title}</p>
+                              <p className="text-xs text-gray-600 mt-0.5">{step.description}</p>
+                              <span className="text-[10px] text-gray-500 bg-white border border-gray-200 px-1.5 py-0.5 rounded mt-1.5 inline-block">
+                                ⏳ {step.duration}
+                              </span>
+
+                              {step.resources && step.resources.length > 0 && (
+                               <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-100">
+                                 {step.resources.map((url: string, i: number) => (
+                                  <a 
+                                   key={i} 
+                                   href={url} 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   className="text-[10px] text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded"
+                                  >
+                                   🔗 Kaynak {i + 1}
+                                   </a>
+                                   ))}
+                                    </div>
+                                 )}                
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               );
             })}
@@ -136,3 +184,4 @@ export default async function StudentDashboardPage() {
     </div>
   );
 }
+
